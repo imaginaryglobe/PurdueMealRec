@@ -1,42 +1,301 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* Modern, Friendly UI Styles */
+
+/* Bubble Styles */
+.bubble {
+  display: inline-block;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 16px;
+  margin: 2px 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-color);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+}
+
+.bubble:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.bubble.active {
+  box-shadow: 0 0 0 4px var(--primary-color), 0 4px 16px var(--shadow);
+  transform: translateY(-2px);
+}
+
+/* Specific Bubble Colors */
+.calories-bubble {
+  background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+  color: #d63031;
+}
+
+.total-fat-bubble {
+  background: linear-gradient(135deg, #fd79a8, #e84393);
+  color: #ffffff;
+}
+
+.protein-bubble {
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  color: #ffffff;
+}
+
+.sodium-bubble {
+  background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+  color: #ffffff;
+}
+
+.carbohydrates-bubble {
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+  color: #ffffff;
+}
+
+.calories-per-protein-bubble {
+  background: linear-gradient(135deg, #ff00ff, #c700ff);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.serving-bubble {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--light-text);
+}
+
+.hall-bubble {
+  background: linear-gradient(135deg, #55efc4, #00b894);
+  color: #2d3436;
+}
+
+.meal-bubble {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-color);
+  padding: 8px 14px;
+}
+
+.meal-bubble.active {
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+/* Food Button */
+.food-nutrition-btn {
+  background: linear-gradient(135deg, var(--primary-color), #357abd);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 12px 20px;
+  font-size: 1.1em;
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: var(--transition);
+  width: 100%;
+  text-align: left;
+}
+
+.food-nutrition-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px var(--shadow);
+}
+
+/* Modal and Popout Styles */
+.modal-overlay, .sidepop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.sidepop-overlay {
+  justify-content: center;
+  background: none;
+}
+
+.modal-centered, .sidepop-panel {
+  background: var(--background);
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 40px var(--shadow);
+  padding: 32px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+.sidepop-panel {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.4s ease;
+  min-width: 350px;
+  max-width: 400px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Buttons in Modals */
+.modal-btn {
+  background: var(--accent-color);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 12px 24px;
+  font-size: 1em;
+  color: #ffffff;
+  margin: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.modal-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+/* Nutrition Panel */
+.nutrition-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.nutrition-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Main Containers */
+.menus-container, .food-sorter {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 32px var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.menus-title {
   text-align: center;
+  margin-bottom: 32px;
+  color: var(--primary-color);
+  font-size: 2em;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Dropdown Styles */
+.dropdown-root {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
 }
 
-@keyframes logo-spin {
+.dropdown-btn {
+  background: var(--secondary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 16px 24px;
+  font-size: 1.2em;
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.dropdown-btn:hover, .dropdown-btn.open {
+  background: var(--primary-color);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Sort Controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Food List */
+.food-list-item {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  transition: var(--transition);
+}
+
+.food-list-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius);
+}
+
+@keyframes fadeInUp {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+.food-list-item {
+  animation: fadeInUp 0.5s ease;
+}
+
+/* Hide scrollbars */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
+@media (max-width: 768px) {
+  .menus-container, .food-sorter {
+    margin: 20px;
+    padding: 20px;
   }
-}
 
-.card {
-  padding: 2em;
-}
+  .bubble {
+    padding: 4px 12px;
+    font-size: 0.8em;
+  }
 
-.read-the-docs {
-  color: #888;
+  .modal-centered, .sidepop-panel {
+    margin: 20px;
+    padding: 20px;
+  }
 }
