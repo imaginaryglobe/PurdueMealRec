@@ -284,60 +284,77 @@
   scrollbar-width: none;
 }
 @media (max-width: 768px) {
+  body {
+    font-size: 18px;
+  }
+
   .menus-container, .food-sorter {
     margin: 10px;
-    padding: 16px;
+    padding: 20px;
     max-width: none;
   }
 
   .bubble {
-    padding: 8px 16px;
-    font-size: 0.9em;
+    padding: 10px 20px;
+    font-size: 1em;
     margin: 4px 2px;
   }
 
   .food-nutrition-btn {
-    padding: 16px 20px;
-    font-size: 1.2em;
+    padding: 20px 24px;
+    font-size: 1.4em;
   }
 
   .modal-centered, .sidepop-panel {
     margin: 10px;
-    padding: 20px;
+    padding: 24px;
     max-width: 95vw;
   }
 
   .sort-controls {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 16px;
+    padding: 20px;
   }
 
   .sort-buttons {
     justify-content: center;
+    gap: 12px;
   }
 
   .food-list-item {
-    padding: 12px 0;
+    padding: 16px 0;
   }
 
   .food-list-item > div {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 12px;
   }
 
   .food-list-item .bubble {
-    font-size: 0.8em;
-    padding: 4px 8px;
+    font-size: 0.9em;
+    padding: 6px 12px;
   }
 
   input[type="text"] {
     width: 100%;
     max-width: none;
+    padding: 12px;
+    font-size: 1.1em;
   }
 
   .meal-bubble {
-    padding: 10px 16px;
+    padding: 12px 20px;
+    font-size: 1em;
+  }
+
+  h3 {
+    font-size: 1.5em;
+  }
+
+  .menus-title {
+    font-size: 1.8em;
   }
 }
