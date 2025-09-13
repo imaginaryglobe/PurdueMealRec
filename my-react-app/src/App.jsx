@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import FoodSorter from './components/FoodSorter';
 import './App.css';
-
+// test
 function App() {
   const [menus, setMenus] = useState({});
   const [loading, setLoading] = useState(true);
