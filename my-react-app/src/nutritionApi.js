@@ -17,7 +17,7 @@ export async function fetchNutrition(itemId) {
     }
   }
 
-  const res = await fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
+  const res = await fetch('/.netlify/functions/proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

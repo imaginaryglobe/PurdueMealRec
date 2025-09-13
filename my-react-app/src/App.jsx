@@ -39,7 +39,7 @@ function App() {
     console.log("Fetching fresh menu data");
     Promise.all(
       diningCourts.map(name =>
-        fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
+        fetch('/.netlify/functions/proxy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
