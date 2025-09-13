@@ -72,6 +72,7 @@ function FoodSorter({ menus }) {
   const [mealFilter, setMealFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingNutrition, setLoadingNutrition] = useState(false);
+  const [menuCachedAt, setMenuCachedAt] = useState(null);
 
   useEffect(() => {
     const allFoods = [];
@@ -95,7 +96,30 @@ function FoodSorter({ menus }) {
       Object.fromEntries(allFoods.map(f => [`${f.itemId}-${f.meal}-${f.hall}`, f]))
     );
     setFoods(uniqueFoods);
-  }, [menus]);
+    
+    // Set cache timestamp when menu is first loaded
+    if (uniqueFoods.length > 0 && !menuCachedAt) {
+      // Try to get actual cache timestamp from localStorage
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const cacheKey = `menus_${dateStr}`;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setMenuCachedAt(new Date(parsed.timestamp).toLocaleString());
+        } catch (e) {
+          setMenuCachedAt(new Date().toLocaleString());
+        }
+      } else {
+        setMenuCachedAt(new Date().toLocaleString());
+      }
+    }
+  }, [menus, menuCachedAt]);
 
   useEffect(() => {
     if (!foods.length) return;
@@ -160,6 +184,47 @@ function FoodSorter({ menus }) {
   return (
     <div className="food-sorter">
       <h3>All Foods (Click for Nutrition)</h3>
+      {menuCachedAt && (
+        <div style={{ 
+          fontSize: '0.9rem', 
+          color: '#666', 
+          marginBottom: '16px',
+          fontStyle: 'italic',
+          padding: '8px 12px',
+          background: '#f8f9fa',
+          borderRadius: '6px',
+          border: '1px solid #e9ecef',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span>Menu cached at: {menuCachedAt}</span>
+          <button
+            onClick={() => {
+              // Clear menu cache and reload
+              const today = new Date();
+              const yyyy = today.getFullYear();
+              const mm = String(today.getMonth() + 1).padStart(2, '0');
+              const dd = String(today.getDate()).padStart(2, '0');
+              const dateStr = `${yyyy}-${mm}-${dd}`;
+              localStorage.removeItem(`menus_${dateStr}`);
+              window.location.reload();
+            }}
+            style={{
+              padding: '4px 8px',
+              fontSize: '0.8rem',
+              background: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+            title="Force refresh menu data"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      )}
       <div className="sort-controls" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
         <div style={{ marginBottom: 16 }}>
           <input

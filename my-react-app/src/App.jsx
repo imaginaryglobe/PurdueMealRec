@@ -14,7 +14,29 @@ function App() {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     const diningCourts = ['Earhart', 'Ford', 'Hillenbrand', 'Wiley', 'Windsor'];
+    
+    // Check for cached menu data
+    const cacheKey = `menus_${dateStr}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        // Check if cached today
+        const cacheDate = new Date(parsed.timestamp).toDateString();
+        const todayStr = new Date().toDateString();
+        if (cacheDate === todayStr) {
+          console.log("Menu cache hit - using cached data");
+          setMenus(parsed.data);
+          setLoading(false);
+          return; // Skip API calls
+        }
+      } catch (e) {
+        console.log("Invalid menu cache, fetching fresh data");
+        // Invalid cache, continue with fetch
+      }
+    }
 
+    console.log("Fetching fresh menu data");
     Promise.all(
       diningCourts.map(name =>
         fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
@@ -40,6 +62,13 @@ function App() {
           menuObj[name] = menu;
         });
         setMenus(menuObj);
+        
+        // Cache the menu data
+        localStorage.setItem(cacheKey, JSON.stringify({ 
+          data: menuObj, 
+          timestamp: Date.now() 
+        }));
+        
         setLoading(false);
       })
       .catch(err => {
