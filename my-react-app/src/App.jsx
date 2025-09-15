@@ -21,10 +21,9 @@ function App() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // Check if cached today
-        const cacheDate = new Date(parsed.timestamp).toDateString();
-        const todayStr = new Date().toDateString();
-        if (cacheDate === todayStr) {
+        // Check if cached today by comparing date strings directly
+        const cachedDateStr = new Date(parsed.timestamp).toISOString().split('T')[0]; // YYYY-MM-DD format
+        if (cachedDateStr === dateStr) {
           console.log("Menu cache hit - using cached data");
           setMenus(parsed.data);
           setLoading(false);
