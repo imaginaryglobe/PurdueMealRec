@@ -15,15 +15,35 @@ function App() {
     const dateStr = `${yyyy}-${mm}-${dd}`;
     const diningCourts = ['Earhart', 'Ford', 'Hillenbrand', 'Wiley', 'Windsor'];
     
-    // Check for cached menu data
+    // Clean up old cache entries (older than 7 days)
+    const cleanupOldCache = () => {
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('menus_') || key.startsWith('nutrition_'))) {
+          try {
+            const value = localStorage.getItem(key);
+            const parsed = JSON.parse(value);
+            if (parsed.timestamp && parsed.timestamp < sevenDaysAgo) {
+              localStorage.removeItem(key);
+            }
+          } catch (e) {
+            // Remove corrupted cache entries
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    };
+    
+    cleanupOldCache();
     const cacheKey = `menus_${dateStr}`;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // Check if cached today
-        const cacheDate = new Date(parsed.timestamp).toDateString();
-        const todayStr = new Date().toDateString();
+        // Check if cached today (compare YYYY-MM-DD format)
+        const cacheDate = new Date(parsed.timestamp).toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
         if (cacheDate === todayStr) {
           console.log("Menu cache hit - using cached data");
           setMenus(parsed.data);
@@ -39,7 +59,7 @@ function App() {
     console.log("Fetching fresh menu data");
     Promise.all(
       diningCourts.map(name =>
-        fetch('/.netlify/functions/proxy', {
+        fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

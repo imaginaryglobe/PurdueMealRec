@@ -5,9 +5,9 @@ export async function fetchNutrition(itemId) {
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      // Check if cached on a different day
-      const cacheDate = new Date(parsed.timestamp).toDateString();
-      const today = new Date().toDateString();
+      // Check if cached on a different day (compare YYYY-MM-DD format)
+      const cacheDate = new Date(parsed.timestamp).toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
       if (cacheDate === today) {
         console.log("cache successful");
         return parsed.data;
@@ -17,7 +17,7 @@ export async function fetchNutrition(itemId) {
     }
   }
 
-  const res = await fetch('/.netlify/functions/proxy', {
+  const res = await fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
