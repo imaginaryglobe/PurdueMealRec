@@ -1,4 +1,8 @@
 // Utility to fetch nutrition info for a food item by itemId
+const BACKEND_URL = process.env.NODE_ENV === 'production'
+  ? 'https://your-backend-url.com' // Update this for production
+  : 'http://localhost:3001';
+
 export async function fetchNutrition(itemId) {
   const cacheKey = `nutrition_${itemId}`;
   const cached = localStorage.getItem(cacheKey);
@@ -17,6 +21,25 @@ export async function fetchNutrition(itemId) {
     }
   }
 
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/nutrition/${itemId}`);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    const item = await res.json();
+
+    // Cache the result
+    localStorage.setItem(cacheKey, JSON.stringify({ data: item, timestamp: Date.now() }));
+    return item;
+  } catch (error) {
+    console.error('Error fetching nutrition from backend:', error);
+    // Fallback to direct API call if backend is unavailable
+    return await fetchNutritionDirect(itemId);
+  }
+}
+
+// Fallback direct API call (same as original)
+async function fetchNutritionDirect(itemId) {
   const res = await fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -30,7 +53,5 @@ export async function fetchNutrition(itemId) {
   if (item && item.nutritionFacts && item.nutritionFacts.length > 0) {
     item.servingSize = item.nutritionFacts[0].label;
   }
-  // Cache the result
-  localStorage.setItem(cacheKey, JSON.stringify({ data: item, timestamp: Date.now() }));
   return item;
 }
