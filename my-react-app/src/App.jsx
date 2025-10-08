@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import FoodRecommender from './components/FoodRecommender';
 import FoodSorter from './components/FoodSorter';
 import './App.css';
 
@@ -8,6 +9,8 @@ function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log("App useEffect running - fetching menu data");
+    
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -45,7 +48,7 @@ function App() {
         const cacheDate = new Date(parsed.timestamp).toISOString().split('T')[0];
         const todayStr = new Date().toISOString().split('T')[0];
         if (cacheDate === todayStr) {
-          console.log("Menu cache hit - using cached data");
+          console.log("Menu cache hit - using cached data", parsed.data);
           setMenus(parsed.data);
           setLoading(false);
           return; // Skip API calls
@@ -68,19 +71,30 @@ function App() {
             query: `query getLocationMenu($name: String!, $date: Date!) {\n  diningCourtByName(name: $name) {\n    dailyMenu(date: $date) {\n      meals {\n        name\n        stations {\n          name\n          items {\n            item {\n              itemId\n              name\n            }\n          }\n        }\n      }\n    }\n  }\n}`
           })
         })
-          .then(res => res.json())
-          .then(data => ({
-            name,
-            menu: data.data?.diningCourtByName?.dailyMenu || null
-          }))
-          .catch(() => ({ name, menu: null }))
+          .then(res => {
+            console.log(`API response for ${name}:`, res.status);
+            return res.json();
+          })
+          .then(data => {
+            console.log(`Parsed data for ${name}:`, data);
+            return {
+              name,
+              menu: data.data?.diningCourtByName?.dailyMenu || null
+            };
+          })
+          .catch(err => {
+            console.error(`Error fetching ${name}:`, err);
+            return { name, menu: null };
+          })
       )
     )
       .then(results => {
+        console.log("All API results:", results);
         const menuObj = {};
         results.forEach(({ name, menu }) => {
           menuObj[name] = menu;
         });
+        console.log("Final menu object:", menuObj);
         setMenus(menuObj);
         
         // Cache the menu data
@@ -92,6 +106,7 @@ function App() {
         setLoading(false);
       })
       .catch(err => {
+        console.error('Failed to fetch menus:', err);
         setError('Failed to fetch menus: ' + err.message);
         setLoading(false);
       });
@@ -102,7 +117,10 @@ function App() {
 
   return (
     <>
-      <FoodSorter menus={menus} />
+      <FoodRecommender menus={menus} />
+      <div style={{ marginTop: '40px', borderTop: '2px solid #e9ecef', paddingTop: '40px' }}>
+        <FoodSorter menus={menus} />
+      </div>
     </>
   );
 }
