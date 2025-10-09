@@ -116,6 +116,11 @@ function MetricAnalysis({ foods, nutritionMap, metric, title, sortOrder = 'desc'
         return false;
       }
       
+      // Exclude "Garlic Herb chicken strip" (case insensitive)
+      if (food.name.toLowerCase().includes('garlic herb chicken strip')) {
+        return false;
+      }
+      
       if (metric === 'CaloriesPerProtein') {
         const cals = getNutrientValue(nutrition, 'Calories');
         const protein = getNutrientValue(nutrition, 'Protein');
@@ -295,6 +300,11 @@ function FoodRecommender({ menus }) {
         
         // Exclude foods containing "Cheese" (case insensitive)
         if (food.name.toLowerCase().includes('cheese')) {
+          return false;
+        }
+        
+        // Exclude "Garlic Herb chicken strip" (case insensitive)
+        if (food.name.toLowerCase().includes('garlic herb chicken strip')) {
           return false;
         }
         
