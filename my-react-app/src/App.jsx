@@ -97,6 +97,7 @@ function App() {
     const diningCourts = ['Earhart', 'Ford', 'Hillenbrand', 'Wiley', 'Windsor'];
 
     try {
+      console.log(`Fetching menus directly for date: ${dateStr}`);
       const results = await Promise.all(
         diningCourts.map(name =>
           fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
@@ -109,14 +110,18 @@ function App() {
             })
           })
             .then(res => {
-              console.log(`API response for ${name}:`, res.status);
+              console.log(`API response for ${name}:`, res.status, res.ok);
               return res.json();
             })
             .then(data => {
               console.log(`Parsed data for ${name}:`, data);
+              const menu = data.data?.diningCourtByName?.dailyMenu || null;
+              if (!menu) {
+                console.warn(`No menu returned for ${name} on ${dateStr}`);
+              }
               return {
                 name,
-                menu: data.data?.diningCourtByName?.dailyMenu || null
+                menu
               };
             })
             .catch(err => {
@@ -132,6 +137,11 @@ function App() {
         menuObj[name] = menu;
       });
       console.log("Final menu object:", menuObj);
+      console.log("Menu summary:", Object.entries(menuObj).map(([hall, menu]) => ({
+        hall,
+        hasMenu: !!menu,
+        mealsCount: menu?.meals?.length || 0
+      })));
       setMenus(menuObj);
 
       // Cache the menu data

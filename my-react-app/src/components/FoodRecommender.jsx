@@ -216,6 +216,12 @@ function MetricAnalysis({ foods, nutritionMap, metric, title, sortOrder = 'desc'
 
 function FoodRecommender({ menus }) {
   console.log("FoodRecommender received menus:", menus);
+  console.log("Menus object keys:", Object.keys(menus || {}));
+  console.log("Menu values:", Object.entries(menus || {}).map(([hall, menu]) => ({
+    hall,
+    hasMenu: !!menu,
+    mealsCount: menu?.meals?.length || 0
+  })));
   
   const [foods, setFoods] = useState([]);
   const [nutritionMap, setNutritionMap] = useState({});
@@ -227,7 +233,15 @@ function FoodRecommender({ menus }) {
     console.log("FoodRecommender useEffect - processing menus:", menus);
     const allFoods = [];
     Object.entries(menus).forEach(([hall, menu]) => {
-      menu?.meals?.forEach(meal => {
+      if (!menu) {
+        console.warn(`Menu for ${hall} is null or undefined`);
+        return;
+      }
+      if (!menu.meals) {
+        console.warn(`Menu for ${hall} has no meals property:`, menu);
+        return;
+      }
+      menu.meals.forEach(meal => {
         meal.stations?.forEach(station => {
           if (station.name !== 'By Request') {
             station.items?.forEach(item => {
