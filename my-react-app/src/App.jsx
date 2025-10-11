@@ -66,14 +66,13 @@ function App() {
     console.log("Fetching fresh menu data from backend");
 
     // Try backend API first, fallback to direct API
-    fetch(`${BACKEND_URL}/api/menus/all/${dateStr}`)
-      .then(res => {
+    const fetchMenus = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/menus/all/${dateStr}`);
         if (!res.ok) {
           throw new Error(`Backend API error: ${res.status}`);
         }
-        return res.json();
-      })
-      .then(menuObj => {
+        const menuObj = await res.json();
         console.log("Backend API success:", menuObj);
         setMenus(menuObj);
 
@@ -84,12 +83,14 @@ function App() {
         }));
 
         setLoading(false);
-      })
-      .catch(backendError => {
+      } catch (backendError) {
         console.log("Backend API failed, falling back to direct API:", backendError);
         // Fallback to direct API calls
-        return fetchMenusDirect(dateStr);
-      });
+        await fetchMenusDirect(dateStr);
+      }
+    };
+
+    fetchMenus();
   }, []);
 
   const fetchMenusDirect = async (dateStr) => {
