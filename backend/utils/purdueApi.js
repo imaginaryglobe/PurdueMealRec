@@ -1,19 +1,34 @@
-const fetch = require('node-fetch');
+const PURDUE_API_URL = 'https://api.hfs.purdue.edu/menus/v3/GraphQL';
 
-const PURDUE_API_URL = 'https://api.hfs.purdue.edu/menus/v2/graphql';
+// Dynamic import for node-fetch (ESM module)
+let fetch;
+const fetchPromise = import('node-fetch').then(module => {
+  fetch = module.default;
+});
 
 class PurdueApi {
-  async query(graphqlQuery, variables = {}) {
+  async query(graphqlQuery, variables = {}, operationName = null) {
     try {
+      // Wait for fetch to be loaded
+      if (!fetch) {
+        await fetchPromise;
+      }
+
+      const body = {
+        query: graphqlQuery,
+        variables
+      };
+      
+      if (operationName) {
+        body.operationName = operationName;
+      }
+
       const response = await fetch(PURDUE_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          query: graphqlQuery,
-          variables
-        })
+        body: JSON.stringify(body)
       });
 
       if (!response.ok) {
@@ -29,78 +44,60 @@ class PurdueApi {
   }
 
   async getMenu(diningCourt, date) {
-    const query = `
-      query GetMenu($diningCourt: String!, $date: Date!) {
-        menu(diningCourt: $diningCourt, date: $date) {
-          date
-          diningCourt
-          meals {
-            name
-            stations {
+    const query = `query getLocationMenu($name: String!, $date: Date!) {
+  diningCourtByName(name: $name) {
+    dailyMenu(date: $date) {
+      meals {
+        name
+        stations {
+          name
+          items {
+            item {
+              itemId
               name
-              items {
-                id
-                name
-                isVegetarian
-                allergens
-                nutrition {
-                  calories
-                  fat
-                  carbs
-                  protein
-                  sodium
-                }
-              }
             }
           }
         }
       }
-    `;
+    }
+  }
+}`;
 
     const variables = {
-      diningCourt,
+      name: diningCourt,
       date
     };
 
-    const result = await this.query(query, variables);
-    return result.data?.menu || null;
+    const result = await this.query(query, variables, 'getLocationMenu');
+    return result.data?.diningCourtByName?.dailyMenu || null;
   }
 
   async getNutrition(itemId) {
-    const query = `
-      query GetNutrition($itemId: ID!) {
-        item(id: $itemId) {
-          id
-          name
-          nutrition {
-            calories
-            fat
-            carbs
-            protein
-            sodium
-            fiber
-            sugar
-            cholesterol
-            saturatedFat
-            transFat
-            vitaminA
-            vitaminC
-            calcium
-            iron
-          }
-          allergens
-          ingredients
-          servingSize
-        }
-      }
-    `;
+    const query = `query ($id: Guid!) {
+  itemByItemId(itemId: $id) {
+    itemId
+    name
+    isNutritionReady
+    nutritionFacts {
+      name
+      value
+      label
+    }
+  }
+}`;
 
     const variables = {
-      itemId
+      id: itemId
     };
 
     const result = await this.query(query, variables);
-    return result.data?.item || null;
+    const item = result.data?.itemByItemId;
+    
+    if (item && item.nutritionFacts && item.nutritionFacts.length > 0) {
+      item.servingSize = item.nutritionFacts[0].label;
+    }
+    
+    return item || null;
   }
 
   async getAllMenus(date) {
