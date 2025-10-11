@@ -66,14 +66,13 @@ function App() {
     console.log("Fetching fresh menu data from backend");
 
     // Try backend API first, fallback to direct API
-    fetch(`${BACKEND_URL}/api/menus/all/${dateStr}`)
-      .then(res => {
+    const fetchMenus = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/menus/all/${dateStr}`);
         if (!res.ok) {
           throw new Error(`Backend API error: ${res.status}`);
         }
-        return res.json();
-      })
-      .then(menuObj => {
+        const menuObj = await res.json();
         console.log("Backend API success:", menuObj);
         setMenus(menuObj);
 
@@ -84,18 +83,21 @@ function App() {
         }));
 
         setLoading(false);
-      })
-      .catch(backendError => {
+      } catch (backendError) {
         console.log("Backend API failed, falling back to direct API:", backendError);
         // Fallback to direct API calls
-        return fetchMenusDirect(dateStr);
-      });
+        await fetchMenusDirect(dateStr);
+      }
+    };
+
+    fetchMenus();
   }, []);
 
   const fetchMenusDirect = async (dateStr) => {
     const diningCourts = ['Earhart', 'Ford', 'Hillenbrand', 'Wiley', 'Windsor'];
 
     try {
+      console.log(`Fetching menus directly for date: ${dateStr}`);
       const results = await Promise.all(
         diningCourts.map(name =>
           fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
@@ -108,14 +110,18 @@ function App() {
             })
           })
             .then(res => {
-              console.log(`API response for ${name}:`, res.status);
+              console.log(`API response for ${name}:`, res.status, res.ok);
               return res.json();
             })
             .then(data => {
               console.log(`Parsed data for ${name}:`, data);
+              const menu = data.data?.diningCourtByName?.dailyMenu || null;
+              if (!menu) {
+                console.warn(`No menu returned for ${name} on ${dateStr}`);
+              }
               return {
                 name,
-                menu: data.data?.diningCourtByName?.dailyMenu || null
+                menu
               };
             })
             .catch(err => {
@@ -131,6 +137,11 @@ function App() {
         menuObj[name] = menu;
       });
       console.log("Final menu object:", menuObj);
+      console.log("Menu summary:", Object.entries(menuObj).map(([hall, menu]) => ({
+        hall,
+        hasMenu: !!menu,
+        mealsCount: menu?.meals?.length || 0
+      })));
       setMenus(menuObj);
 
       // Cache the menu data
