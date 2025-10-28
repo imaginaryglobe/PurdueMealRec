@@ -3,9 +3,9 @@ import FoodRecommender from './components/FoodRecommender';
 import FoodSorter from './components/FoodSorter';
 import './App.css';
 
-const BACKEND_URL = process.env.NODE_ENV === 'production'
-  ? 'https://your-backend-url.com' // Update this for production
-  : 'http://localhost:3001';
+const API_URL = process.env.NODE_ENV === 'production'
+  ? '/.netlify/functions/proxy' // Use Netlify function in production
+  : 'https://api.hfs.purdue.edu/menus/v3/GraphQL'; // Direct API in development
 
 function App() {
   const [menus, setMenus] = useState({});
@@ -52,44 +52,32 @@ function App() {
         const cacheDate = new Date(parsed.timestamp).toISOString().split('T')[0];
         const todayStr = new Date().toISOString().split('T')[0];
         if (cacheDate === todayStr) {
-          console.log("Menu cache hit - using cached data", parsed.data);
-          setMenus(parsed.data);
-          setLoading(false);
-          return; // Skip API calls
+          // Also check if cached data is not empty/null
+          const hasValidData = parsed.data && 
+            Object.values(parsed.data).some(menu => menu !== null && menu !== undefined);
+          
+          if (hasValidData) {
+            console.log("Menu cache hit - using cached data", parsed.data);
+            setMenus(parsed.data);
+            setLoading(false);
+            return; // Skip API calls
+          } else {
+            console.log("Cached data is empty/null, fetching fresh data");
+            // Remove invalid cache
+            localStorage.removeItem(cacheKey);
+          }
         }
       } catch (e) {
         console.log("Invalid menu cache, fetching fresh data");
         // Invalid cache, continue with fetch
+        localStorage.removeItem(cacheKey);
       }
     }
 
-    console.log("Fetching fresh menu data from backend");
+    console.log("Fetching fresh menu data");
 
-    // Try backend API first, fallback to direct API
-    fetch(`${BACKEND_URL}/api/menus/all/${dateStr}`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Backend API error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(menuObj => {
-        console.log("Backend API success:", menuObj);
-        setMenus(menuObj);
-
-        // Cache the menu data
-        localStorage.setItem(cacheKey, JSON.stringify({
-          data: menuObj,
-          timestamp: Date.now()
-        }));
-
-        setLoading(false);
-      })
-      .catch(backendError => {
-        console.log("Backend API failed, falling back to direct API:", backendError);
-        // Fallback to direct API calls
-        return fetchMenusDirect(dateStr);
-      });
+    // Use API directly (Netlify function in production, direct API in development)
+    fetchMenusDirect(dateStr);
   }, []);
 
   const fetchMenusDirect = async (dateStr) => {
@@ -97,32 +85,78 @@ function App() {
 
     try {
       const results = await Promise.all(
-        diningCourts.map(name =>
-          fetch('https://api.hfs.purdue.edu/menus/v3/GraphQL', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              operationName: 'getLocationMenu',
-              variables: { name, date: dateStr },
-              query: `query getLocationMenu($name: String!, $date: Date!) {\n  diningCourtByName(name: $name) {\n    dailyMenu(date: $date) {\n      meals {\n        name\n        stations {\n          name\n          items {\n            item {\n              itemId\n              name\n            }\n          }\n        }\n      }\n    }\n  }\n}`
+        diningCourts.map(name => {
+          const query = `query getLocationMenu($name: String!, $date: Date!) {
+            diningCourtByName(name: $name) {
+              dailyMenu(date: $date) {
+                meals {
+                  name
+                  stations {
+                    name
+                    items {
+                      item {
+                        itemId
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }`;
+
+          const variables = { name, date: dateStr };
+
+          if (process.env.NODE_ENV === 'production') {
+            // Use Netlify function in production
+            return fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query, variables })
             })
-          })
-            .then(res => {
-              console.log(`API response for ${name}:`, res.status);
-              return res.json();
+              .then(res => {
+                console.log(`Netlify function response for ${name}:`, res.status);
+                return res.json();
+              })
+              .then(data => {
+                console.log(`Parsed data for ${name}:`, data);
+                return {
+                  name,
+                  menu: data.data?.diningCourtByName?.dailyMenu || null
+                };
+              })
+              .catch(err => {
+                console.error(`Error fetching ${name}:`, err);
+                return { name, menu: null };
+              });
+          } else {
+            // Direct API call in development
+            return fetch(API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                operationName: 'getLocationMenu',
+                variables,
+                query
+              })
             })
-            .then(data => {
-              console.log(`Parsed data for ${name}:`, data);
-              return {
-                name,
-                menu: data.data?.diningCourtByName?.dailyMenu || null
-              };
-            })
-            .catch(err => {
-              console.error(`Error fetching ${name}:`, err);
-              return { name, menu: null };
-            })
-        )
+              .then(res => {
+                console.log(`API response for ${name}:`, res.status);
+                return res.json();
+              })
+              .then(data => {
+                console.log(`Parsed data for ${name}:`, data);
+                return {
+                  name,
+                  menu: data.data?.diningCourtByName?.dailyMenu || null
+                };
+              })
+              .catch(err => {
+                console.error(`Error fetching ${name}:`, err);
+                return { name, menu: null };
+              });
+          }
+        })
       );
 
       console.log("All API results:", results);

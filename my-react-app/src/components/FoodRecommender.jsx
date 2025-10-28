@@ -175,7 +175,7 @@ function MetricAnalysis({ foods, nutritionMap, metric, title, sortOrder = 'desc'
         Top 15: {title} {sortOrder === 'desc' ? '(Highest)' : '(Lowest)'}
       </h4>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '8px' }}>
-        {topFoods.map((food, index) => {
+        {topFoods.length > 0 ? topFoods.map((food, index) => {
           const key = `${food.itemId}-${food.meal}-${food.hall}`;
           const nutrition = nutritionMap[key];
           let value, unit = '';
@@ -208,15 +208,23 @@ function MetricAnalysis({ foods, nutritionMap, metric, title, sortOrder = 'desc'
               </div>
             </div>
           );
-        })}
+        }) : (
+          <div style={{ 
+            gridColumn: '1 / -1', 
+            textAlign: 'center', 
+            padding: '20px', 
+            color: '#666',
+            fontStyle: 'italic'
+          }}>
+            No qualifying foods found for {title.toLowerCase()}. Check console for filtering details.
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 function FoodRecommender({ menus }) {
-  console.log("FoodRecommender received menus:", menus);
-  
   const [foods, setFoods] = useState([]);
   const [nutritionMap, setNutritionMap] = useState({});
   const [loadingNutrition, setLoadingNutrition] = useState(false);
@@ -224,7 +232,6 @@ function FoodRecommender({ menus }) {
 
   // Extract all foods from menus
   useEffect(() => {
-    console.log("FoodRecommender useEffect - processing menus:", menus);
     const allFoods = [];
     Object.entries(menus).forEach(([hall, menu]) => {
       menu?.meals?.forEach(meal => {
@@ -245,7 +252,6 @@ function FoodRecommender({ menus }) {
     const uniqueFoods = Object.values(
       Object.fromEntries(allFoods.map(f => [`${f.itemId}-${f.meal}-${f.hall}`, f]))
     );
-    console.log("Processed foods:", uniqueFoods.length, "unique foods");
     setFoods(uniqueFoods);
   }, [menus]);
 
@@ -372,8 +378,6 @@ function FoodRecommender({ menus }) {
       }
     });
 
-    console.log('Hall distribution result:', { counts: hallCounts, totalTopFoods: topFoodsSet.size });
-
     return {
       counts: hallCounts,
       totalTopFoods: topFoodsSet.size
@@ -430,6 +434,12 @@ function FoodRecommender({ menus }) {
       {loadingNutrition && (
         <div style={{ textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' }}>
           Loading nutrition data for analysis...
+        </div>
+      )}
+
+      {!loadingNutrition && foods.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' }}>
+          No foods data available. Check browser console (F12) for debugging information.
         </div>
       )}
 
