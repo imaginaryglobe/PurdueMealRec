@@ -1,0 +1,8 @@
+{
+  "name": "purdue-meal-rec",
+  "version": "1.0.0",
+  "description": "Purdue Meal Recommendation App",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
