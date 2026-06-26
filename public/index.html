@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purdue Dining Recommender | Top Protein Foods</title>
+  <meta name="description"
+    content="Find the best protein-efficient foods at Purdue dining courts, sorted by calories per gram of protein.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#080808">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">🍽️</span>
+          <div class="logo-text">
+            <h1>Purdue Protein Finder</h1>
+            <p>Best foods for gains, ranked by efficiency</p>
+          </div>
+        </div>
+        <div class="header-controls">
+          <div class="date-picker">
+            <label for="menu-date">Menu Date</label>
+            <input type="date" id="menu-date">
+          </div>
+          <button class="refresh-btn" id="refresh-btn" title="Refresh data">
+            🔄 Refresh
+          </button>
+          <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
+            🌙
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters -->
+    <section class="filters">
+      <div class="filter-group">
+        <label>Dining Court</label>
+        <div class="filter-buttons" id="court-filters">
+          <button class="filter-btn active" data-court="all">All</button>
+          <button class="filter-btn" data-court="earhart">Earhart</button>
+          <button class="filter-btn" data-court="ford">Ford</button>
+          <button class="filter-btn" data-court="hillenbrand">Hillenbrand</button>
+          <button class="filter-btn" data-court="wiley">Wiley</button>
+          <button class="filter-btn" data-court="windsor">Windsor</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Meal</label>
+        <div class="filter-buttons" id="meal-filters">
+          <button class="filter-btn active" data-meal="lunch">Lunch</button>
+          <button class="filter-btn" data-meal="dinner">Dinner</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Sort By</label>
+        <div class="filter-buttons" id="sort-filters">
+          <button class="filter-btn active" data-sort="protein">🥩 Protein / Cal</button>
+          <button class="filter-btn" data-sort="fiber">🥦 Fiber / Cal</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div class="loading" id="loading">
+      <div class="loading-skeletons">
+        <div class="skeleton-card">
+          <div class="skeleton-inner">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line narrow"></div>
+            <div class="skeleton-line tall"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-inner">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line narrow"></div>
+            <div class="skeleton-line tall"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-inner">
+            <div class="skeleton-line wide"></div>
+            <div class="skeleton-line narrow"></div>
+            <div class="skeleton-line tall"></div>
+            <div class="skeleton-line medium"></div>
+          </div>
+        </div>
+      </div>
+      <p>Finding the best foods...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error" id="error" style="display: none;">
+      <span class="error-icon">⚠️</span>
+      <p id="error-message">Failed to load menu data</p>
+      <button class="btn-retry" onclick="fetchData()">Try Again</button>
+    </div>
+
+    <!-- Food Grid -->
+    <main class="food-grid" id="food-grid">
+      <!-- Food cards will be inserted here -->
+    </main>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display: none;">
+      <span class="empty-icon">🍴</span>
+      <p>No foods found for this selection</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

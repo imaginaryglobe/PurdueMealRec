@@ -1,0 +1,17 @@
+{
+  "name": "purdue-dining-recommender",
+  "version": "1.0.0",
+  "description": "Purdue dining menu website showing foods ranked by protein efficiency",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "top15": "node top-15-text.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "express": "^4.18.2"
+  }
+}
