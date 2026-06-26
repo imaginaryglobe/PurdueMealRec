@@ -4,120 +4,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Purdue Dining Recommender | Top Protein Foods</title>
+  <title>Purdue Protein — Best foods, ranked</title>
   <meta name="description"
-    content="Find the best protein-efficient foods at Purdue dining courts, sorted by calories per gram of protein.">
+    content="The most protein-efficient foods at Purdue dining courts, ranked by calories per gram of protein.">
+  <meta name="theme-color" content="#FAF9F6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#080808">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <div class="logo">
-          <span class="logo-icon">🍽️</span>
-          <div class="logo-text">
-            <h1>Purdue Protein Finder</h1>
-            <p>Best foods for gains, ranked by efficiency</p>
-          </div>
+  <div class="page">
+    <!-- Masthead -->
+    <header class="masthead">
+      <div class="masthead-top">
+        <div class="brand">
+          <h1 class="title">Purdue Protein</h1>
+          <p class="subtitle">The most efficient foods on campus, ranked daily.</p>
         </div>
-        <div class="header-controls">
-          <div class="date-picker">
-            <label for="menu-date">Menu Date</label>
-            <input type="date" id="menu-date">
-          </div>
-          <button class="refresh-btn" id="refresh-btn" title="Refresh data">
-            🔄 Refresh
-          </button>
-          <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
-            🌙
-          </button>
+        <div class="masthead-tools">
+          <input type="date" id="menu-date" class="date-input" aria-label="Menu date">
+          <button class="ghost-btn" id="refresh-btn" title="Refresh data">Refresh</button>
+          <button class="ghost-btn icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">☾</button>
         </div>
       </div>
     </header>
 
-    <!-- Filters -->
-    <section class="filters">
-      <div class="filter-group">
-        <label>Dining Court</label>
-        <div class="filter-buttons" id="court-filters">
-          <button class="filter-btn active" data-court="all">All</button>
-          <button class="filter-btn" data-court="earhart">Earhart</button>
-          <button class="filter-btn" data-court="ford">Ford</button>
-          <button class="filter-btn" data-court="hillenbrand">Hillenbrand</button>
-          <button class="filter-btn" data-court="wiley">Wiley</button>
-          <button class="filter-btn" data-court="windsor">Windsor</button>
+    <!-- Controls -->
+    <nav class="controls" aria-label="Filters">
+      <div class="control-row" id="court-filters">
+        <button class="tab active" data-court="all">All courts</button>
+        <button class="tab" data-court="earhart">Earhart</button>
+        <button class="tab" data-court="ford">Ford</button>
+        <button class="tab" data-court="hillenbrand">Hillenbrand</button>
+        <button class="tab" data-court="wiley">Wiley</button>
+        <button class="tab" data-court="windsor">Windsor</button>
+      </div>
+      <div class="control-row split">
+        <div class="control-group" id="meal-filters">
+          <button class="tab active" data-meal="lunch">Lunch</button>
+          <button class="tab" data-meal="dinner">Dinner</button>
+        </div>
+        <div class="control-group" id="sort-filters">
+          <button class="tab active" data-sort="protein">Protein</button>
+          <button class="tab" data-sort="fiber">Fiber</button>
         </div>
       </div>
-      <div class="filter-group">
-        <label>Meal</label>
-        <div class="filter-buttons" id="meal-filters">
-          <button class="filter-btn active" data-meal="lunch">Lunch</button>
-          <button class="filter-btn" data-meal="dinner">Dinner</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <label>Sort By</label>
-        <div class="filter-buttons" id="sort-filters">
-          <button class="filter-btn active" data-sort="protein">🥩 Protein / Cal</button>
-          <button class="filter-btn" data-sort="fiber">🥦 Fiber / Cal</button>
-        </div>
-      </div>
-    </section>
+    </nav>
 
-    <!-- Loading State -->
+    <!-- Loading -->
     <div class="loading" id="loading">
-      <div class="loading-skeletons">
-        <div class="skeleton-card">
-          <div class="skeleton-inner">
-            <div class="skeleton-line wide"></div>
-            <div class="skeleton-line narrow"></div>
-            <div class="skeleton-line tall"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-        </div>
-        <div class="skeleton-card">
-          <div class="skeleton-inner">
-            <div class="skeleton-line wide"></div>
-            <div class="skeleton-line narrow"></div>
-            <div class="skeleton-line tall"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-        </div>
-        <div class="skeleton-card">
-          <div class="skeleton-inner">
-            <div class="skeleton-line wide"></div>
-            <div class="skeleton-line narrow"></div>
-            <div class="skeleton-line tall"></div>
-            <div class="skeleton-line medium"></div>
-          </div>
-        </div>
-      </div>
-      <p>Finding the best foods...</p>
+      <ol class="ranking skeleton-list">
+        <li class="rank-row skeleton"><span class="sk sk-num"></span>
+          <span class="sk-body"><span class="sk sk-line wide"></span><span class="sk sk-line narrow"></span></span>
+          <span class="sk sk-ratio"></span>
+        </li>
+        <li class="rank-row skeleton"><span class="sk sk-num"></span>
+          <span class="sk-body"><span class="sk sk-line wide"></span><span class="sk sk-line narrow"></span></span>
+          <span class="sk sk-ratio"></span>
+        </li>
+        <li class="rank-row skeleton"><span class="sk sk-num"></span>
+          <span class="sk-body"><span class="sk sk-line wide"></span><span class="sk sk-line narrow"></span></span>
+          <span class="sk sk-ratio"></span>
+        </li>
+        <li class="rank-row skeleton"><span class="sk sk-num"></span>
+          <span class="sk-body"><span class="sk sk-line wide"></span><span class="sk sk-line narrow"></span></span>
+          <span class="sk sk-ratio"></span>
+        </li>
+      </ol>
     </div>
 
-    <!-- Error State -->
-    <div class="error" id="error" style="display: none;">
-      <span class="error-icon">⚠️</span>
-      <p id="error-message">Failed to load menu data</p>
-      <button class="btn-retry" onclick="fetchData()">Try Again</button>
+    <!-- Error -->
+    <div class="state error" id="error" hidden>
+      <p id="error-message">Something went wrong.</p>
+      <button class="text-link" onclick="fetchData()">Try again</button>
     </div>
 
-    <!-- Food Grid -->
-    <main class="food-grid" id="food-grid">
-      <!-- Food cards will be inserted here -->
+    <!-- Empty -->
+    <div class="state empty" id="empty-state" hidden>
+      <p>No foods match this selection.</p>
+    </div>
+
+    <!-- Ranking -->
+    <main>
+      <ol class="ranking" id="food-list"></ol>
     </main>
 
-    <!-- Empty State -->
-    <div class="empty-state" id="empty-state" style="display: none;">
-      <span class="empty-icon">🍴</span>
-      <p>No foods found for this selection</p>
-    </div>
+    <footer class="colophon">
+      <span id="meta-line">Ranked by calories per gram of protein · lower is better.</span>
+    </footer>
   </div>
 
   <script src="app.js"></script>

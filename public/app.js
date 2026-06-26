@@ -1,40 +1,43 @@
 /**
- * Purdue Dining Recommender - Frontend App
+ * Purdue Protein — Frontend
+ * Data + ranking logic preserved from the original; presentation rebuilt
+ * around a light editorial ranked list.
  */
 
-// DOM Elements
+// DOM
 const dateInput = document.getElementById('menu-date');
 const courtFilters = document.getElementById('court-filters');
 const mealFilters = document.getElementById('meal-filters');
 const sortFilters = document.getElementById('sort-filters');
-const foodGrid = document.getElementById('food-grid');
+const foodList = document.getElementById('food-list');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
 const errorMessage = document.getElementById('error-message');
 const emptyState = document.getElementById('empty-state');
 const refreshBtn = document.getElementById('refresh-btn');
 const themeToggle = document.getElementById('theme-toggle');
+const metaLine = document.getElementById('meta-line');
 
 // State
 let currentData = [];
 let selectedCourt = 'all';
 let selectedMeal = 'lunch';
 let selectedSort = 'protein';
-let isDarkMode = localStorage.getItem('theme') !== 'light';
+// Light editorial is the default; dark is opt-in.
+let isDarkMode = localStorage.getItem('theme') === 'dark';
 
 /**
- * Initialize the app
+ * Initialize
  */
 function init() {
-    // Set date to today in Eastern time
+    // Today in Eastern time
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
     dateInput.value = today;
 
-    // Add event listeners
     dateInput.addEventListener('change', fetchData);
 
     courtFilters.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
+        if (e.target.classList.contains('tab')) {
             setActiveFilter(courtFilters, e.target);
             selectedCourt = e.target.dataset.court;
             renderFilteredData();
@@ -42,7 +45,7 @@ function init() {
     });
 
     mealFilters.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
+        if (e.target.classList.contains('tab')) {
             setActiveFilter(mealFilters, e.target);
             selectedMeal = e.target.dataset.meal;
             renderFilteredData();
@@ -50,21 +53,19 @@ function init() {
     });
 
     sortFilters.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
+        if (e.target.classList.contains('tab')) {
             setActiveFilter(sortFilters, e.target);
             selectedSort = e.target.dataset.sort;
             renderFilteredData();
         }
     });
 
-    // Refresh button - updates date to today and fetches fresh data
     refreshBtn.addEventListener('click', () => {
         const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
         dateInput.value = today;
-        fetchData(true);
+        fetchData();
     });
 
-    // Theme toggle
     applyTheme();
     themeToggle.addEventListener('click', () => {
         isDarkMode = !isDarkMode;
@@ -72,30 +73,30 @@ function init() {
         applyTheme();
     });
 
-    // Initial fetch
     fetchData();
 }
 
 /**
- * Apply current theme
+ * Theme
  */
 function applyTheme() {
-    document.body.classList.toggle('light-mode', !isDarkMode);
-    themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+    document.body.classList.toggle('dark', isDarkMode);
+    themeToggle.textContent = isDarkMode ? '☀' : '☾';
+    const themeColor = isDarkMode ? '#16140F' : '#FAF9F6';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', themeColor);
 }
 
 /**
- * Set active state on filter button
+ * Active tab within a group
  */
 function setActiveFilter(container, activeBtn) {
-    container.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
+    container.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
     activeBtn.classList.add('active');
 }
 
 /**
- * Fetch data from API
+ * Fetch data
  */
 async function fetchData() {
     const date = dateInput.value;
@@ -116,27 +117,26 @@ async function fetchData() {
         selectedMeal = 'lunch';
         resetFilterButtons();
         renderFilteredData();
-
     } catch (error) {
         console.error('Failed to fetch data:', error);
-        showError(`Failed to load menu data: ${error.message}`);
+        showError(`Couldn't load today's menu: ${error.message}`);
     }
 }
 
 /**
- * Reset filter buttons to 'all'
+ * Reset court/meal tabs to defaults
  */
 function resetFilterButtons() {
-    courtFilters.querySelectorAll('.filter-btn').forEach(btn => {
+    courtFilters.querySelectorAll('.tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.court === 'all');
     });
-    mealFilters.querySelectorAll('.filter-btn').forEach(btn => {
+    mealFilters.querySelectorAll('.tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.meal === 'lunch');
     });
 }
 
 /**
- * Filter and render data based on current selections
+ * Filter + sort + render (logic unchanged from original)
  */
 function renderFilteredData() {
     let filtered = [...currentData];
@@ -153,7 +153,7 @@ function renderFilteredData() {
         );
     }
 
-    // Exclude specific items (toppings that shouldn't be standalone)
+    // Toppings that shouldn't stand alone (keep in sync with top-15-text.js)
     const excludedFoods = [
         'shredded 3 cheese blend',
         'grated parmesan cheese',
@@ -164,155 +164,118 @@ function renderFilteredData() {
     );
 
     if (selectedSort === 'fiber') {
-        // Filter to items with valid fiber data and at least 50 calories
         filtered = filtered.filter(item =>
             item.calories >= 50 && item.fiber != null && item.fiber > 0 && item.fiberRatio != null
         );
-        // Sort by calories per gram of fiber (lower = more fiber-efficient)
         filtered.sort((a, b) => a.fiberRatio - b.fiberRatio);
     } else {
-        // Protein mode: filter out small portions/toppings with misleading ratios
         filtered = filtered.filter(item =>
             item.calories >= 50 && item.protein >= 5
         );
-        // Sort by calories per gram of protein (lower = more protein-efficient)
         filtered.sort((a, b) => a.ratio - b.ratio);
     }
 
+    updateMetaLine();
     renderFoods(filtered);
 }
 
 /**
- * Render food cards
+ * Colophon line reflects current sort
+ */
+function updateMetaLine() {
+    if (!metaLine) return;
+    metaLine.textContent = selectedSort === 'fiber'
+        ? 'Ranked by calories per gram of fiber · lower is better.'
+        : 'Ranked by calories per gram of protein · lower is better.';
+}
+
+/**
+ * Render the ranked list
  */
 function renderFoods(items) {
     hideLoading();
     hideError();
 
     if (items.length === 0) {
-        foodGrid.innerHTML = '';
-        emptyState.style.display = 'flex';
+        foodList.innerHTML = '';
+        emptyState.hidden = false;
         return;
     }
 
-    emptyState.style.display = 'none';
+    emptyState.hidden = true;
 
-    // Show only top 10
     const top10 = items.slice(0, 10);
-
-    // Render cards
-    foodGrid.innerHTML = top10.map((item, index) => createFoodCard(item, index + 1)).join('');
+    foodList.innerHTML = top10.map((item, index) => createFoodRow(item, index + 1)).join('');
 }
 
 /**
- * Create a food card HTML
+ * One ranked row
  */
-function createFoodCard(item, rank) {
-    const isTop3 = rank <= 3;
-    const caloriesFormatted = Math.round(item.calories);
+function createFoodRow(item, rank) {
     const courtSlug = item.location.toLowerCase();
-    const courtClass = `court-${courtSlug}`;
-    const cardCourtClass = `card-${courtSlug}`;
+    const rankLabel = String(rank).padStart(2, '0');
 
     const traitsHtml = item.traits.map(trait => `
-    <img
-      class="trait-icon"
-      src="${trait.svgIconWithoutBackground}"
-      alt="${trait.name}"
-      title="${trait.name}"
-    >
-  `).join('');
+      <img class="trait-icon" src="${trait.svgIconWithoutBackground}" alt="${escapeHtml(trait.name)}" title="${escapeHtml(trait.name)}">
+    `).join('');
 
-    let statsHtml;
+    let ratioText, unitText, detailText;
     if (selectedSort === 'fiber') {
-        const fiberRatioFormatted = item.fiberRatio != null ? item.fiberRatio.toFixed(1) : '--';
-        const fiberFormatted = item.fiber != null ? Math.round(item.fiber) + 'g' : '--';
-        statsHtml = `
-        <div class="ratio-hero">
-          <span class="ratio-value">${fiberRatioFormatted}</span>
-          <span class="ratio-label">cal / g fiber</span>
-        </div>
-        <div class="secondary-stats">
-          <div class="secondary-stat">
-            <span class="secondary-value">${fiberFormatted}</span>
-            <span class="secondary-label">Fiber</span>
-          </div>
-          <div class="secondary-stat">
-            <span class="secondary-value">${caloriesFormatted}</span>
-            <span class="secondary-label">Cal</span>
-          </div>
-        </div>`;
+        ratioText = item.fiberRatio != null ? item.fiberRatio.toFixed(1) : '—';
+        unitText = 'cal / g fiber';
+        const fiber = item.fiber != null ? Math.round(item.fiber) + 'g fiber' : '— fiber';
+        detailText = `${fiber} · ${Math.round(item.calories)} cal`;
     } else {
-        const ratioFormatted = item.ratio.toFixed(1);
-        const proteinFormatted = Math.round(item.protein);
-        statsHtml = `
-        <div class="ratio-hero">
-          <span class="ratio-value">${ratioFormatted}</span>
-          <span class="ratio-label">cal / g protein</span>
-        </div>
-        <div class="secondary-stats">
-          <div class="secondary-stat">
-            <span class="secondary-value">${proteinFormatted}g</span>
-            <span class="secondary-label">Protein</span>
-          </div>
-          <div class="secondary-stat">
-            <span class="secondary-value">${caloriesFormatted}</span>
-            <span class="secondary-label">Cal</span>
-          </div>
-        </div>`;
+        ratioText = item.ratio.toFixed(1);
+        unitText = 'cal / g protein';
+        detailText = `${Math.round(item.protein)}g protein · ${Math.round(item.calories)} cal`;
     }
 
     return `
-    <article class="food-card ${isTop3 ? 'top-3' : ''} ${rank === 1 ? 'rank-1' : ''} ${cardCourtClass}">
-      <span class="card-rank rank-${rank}">#${rank}</span>
-      <div class="card-header">
-        <h3 class="food-name">${escapeHtml(item.name)}</h3>
-        <div class="food-location">
-          <span class="court ${courtClass}">${item.location}</span>
-          <span>•</span>
-          <span class="meal">${item.meal}</span>
+    <li class="rank-row">
+      <span class="rank-num">${rankLabel}</span>
+      <div class="rank-body">
+        <h2 class="food-name">${escapeHtml(item.name)}</h2>
+        <div class="food-meta">
+          <span class="court-dot court-${courtSlug}"></span>
+          <span class="food-court">${escapeHtml(item.location)}</span>
+          <span class="meta-sep">·</span>
+          <span class="food-court-meal">${escapeHtml(item.meal)}</span>
+          ${traitsHtml ? `<span class="food-traits">${traitsHtml}</span>` : ''}
         </div>
       </div>
-      <div class="card-stats">
-        ${statsHtml}
+      <div class="rank-stat">
+        <div class="ratio">${ratioText}</div>
+        <div class="ratio-unit">${unitText}</div>
+        <div class="stat-detail">${detailText}</div>
       </div>
-      ${traitsHtml ? `<div class="card-traits">${traitsHtml}</div>` : ''}
-    </article>
-  `;
+    </li>`;
 }
 
 /**
- * Show loading state
+ * State helpers
  */
 function showLoading() {
-    loadingEl.style.display = 'flex';
-    errorEl.style.display = 'none';
-    emptyState.style.display = 'none';
-    foodGrid.innerHTML = '';
+    loadingEl.hidden = false;
+    errorEl.hidden = true;
+    emptyState.hidden = true;
+    foodList.innerHTML = '';
 }
 
-/**
- * Hide loading state
- */
 function hideLoading() {
-    loadingEl.style.display = 'none';
+    loadingEl.hidden = true;
 }
 
-/**
- * Show error state
- */
 function showError(message) {
-    loadingEl.style.display = 'none';
-    errorEl.style.display = 'flex';
+    loadingEl.hidden = true;
+    emptyState.hidden = true;
+    errorEl.hidden = false;
     errorMessage.textContent = message;
-    foodGrid.innerHTML = '';
+    foodList.innerHTML = '';
 }
 
-/**
- * Hide error state
- */
 function hideError() {
-    errorEl.style.display = 'none';
+    errorEl.hidden = true;
 }
 
 /**
@@ -324,5 +287,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Start the app
 init();
