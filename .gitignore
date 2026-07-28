@@ -25,13 +25,6 @@ Thumbs.db
 dist/
 build/
 
-# Android (Capacitor) build artifacts
-android/app/build/
-android/build/
-android/.gradle/
-android/local.properties
-android/app/src/main/assets/public/
-
 # Playwright MCP
 .playwright-mcp/
 

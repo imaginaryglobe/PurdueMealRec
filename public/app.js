@@ -153,7 +153,7 @@ function renderFilteredData() {
         );
     }
 
-    // Toppings that shouldn't stand alone (keep in sync with top-15-text.js)
+    // Toppings that shouldn't stand alone
     const excludedFoods = [
         'shredded 3 cheese blend',
         'grated parmesan cheese',
