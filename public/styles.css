@@ -18,11 +18,11 @@
   --gold-soft: #A88E52;
 
   /* Court dots */
-  --earhart: #C2410C;
-  --ford: #0E7490;
-  --hillenbrand: #B8860B;
-  --wiley: #15803D;
-  --windsor: #7C3AED;
+  --earhart: #FF4500;
+  --ford: #00E5FF;
+  --hillenbrand: #FFD500;
+  --wiley: #00E676;
+  --windsor: #B026FF;
 
   /* Type */
   --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
@@ -110,13 +110,6 @@ button {
   font-size: clamp(2rem, 5.5vw, 3rem);
   letter-spacing: -0.02em;
   line-height: 1.04;
-}
-
-.subtitle {
-  margin-top: 0.4rem;
-  color: var(--muted);
-  font-size: 0.95rem;
-  max-width: 34ch;
 }
 
 .masthead-tools {
