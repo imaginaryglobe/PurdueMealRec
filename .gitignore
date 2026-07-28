@@ -21,6 +21,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Claude
+CLAUDE.md
+
 # Build output
 dist/
 build/
