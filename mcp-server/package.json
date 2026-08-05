@@ -1,0 +1,14 @@
+{
+  "name": "purdue-dining-mcp",
+  "version": "1.0.0",
+  "description": "MCP server exposing Purdue HFS dining menu/nutrition data as tools",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  }
+}
