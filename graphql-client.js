@@ -164,6 +164,7 @@ function parseNutrition(nutritionFacts) {
 
 module.exports = {
   DINING_COURTS,
+  executeQuery,
   getDiningCourtMenu,
   getAllMenus,
   extractFoodItems,

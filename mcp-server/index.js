@@ -1,18 +1,16 @@
 #!/usr/bin/env node
 /**
  * MCP server exposing Purdue HFS dining menu/nutrition data as tools.
- * Reuses the GraphQL client from the main app (../graphql-client.js).
+ * Uses executeQuery from ../graphql-client.js but runs its own richer
+ * GraphQL query so every field the API offers (full macros, daily values,
+ * ingredients, allergen/preference traits) reaches the model, not just
+ * the calories/protein/fiber subset the web app needs.
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { z } = require('zod');
-const {
-  DINING_COURTS,
-  getDiningCourtMenu,
-  getAllMenus,
-  extractFoodItems
-} = require('../graphql-client');
+const { DINING_COURTS, executeQuery } = require('../graphql-client');
 
 // Toppings that skew ratios when appearing standalone (mirrors public/app.js)
 const EXCLUDED_FOODS = new Set([
@@ -20,6 +18,134 @@ const EXCLUDED_FOODS = new Set([
   'grated parmesan cheese',
   'garlic herb chicken strip'
 ]);
+
+const FULL_MENU_QUERY = `
+  query getLocationMenu($name: String!, $date: Date!) {
+    diningCourtByName(name: $name) {
+      name
+      formalName
+      dailyMenu(date: $date) {
+        meals {
+          name
+          status
+          startTime
+          endTime
+          stations {
+            name
+            items {
+              itemMenuId
+              item {
+                itemId
+                name
+                isNutritionReady
+                ingredients
+                traits {
+                  name
+                  type
+                }
+                nutritionFacts {
+                  name
+                  value
+                  label
+                  dailyValueLabel
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Maps the API's free-text nutrition fact names to stable camelCase keys.
+// Anything not in this map still comes through in the raw `nutritionFacts` array.
+const NUTRITION_KEY_MAP = {
+  'Serving Size': 'servingSize',
+  'Calories': 'calories',
+  'Calories from fat': 'caloriesFromFat',
+  'Total fat': 'totalFat',
+  'Saturated fat': 'saturatedFat',
+  'Trans Fat': 'transFat',
+  'Cholesterol': 'cholesterol',
+  'Sodium': 'sodium',
+  'Total Carbohydrate': 'totalCarbohydrate',
+  'Sugar': 'sugar',
+  'Added Sugar': 'addedSugar',
+  'Dietary Fiber': 'fiber',
+  'Protein': 'protein',
+  'Calcium': 'calcium',
+  'Iron': 'iron',
+  'Potassium': 'potassium',
+  'Vitamin D': 'vitaminD'
+};
+
+function getFullDiningCourtMenu(name, date) {
+  return executeQuery('getLocationMenu', FULL_MENU_QUERY, { name, date });
+}
+
+function getAllFullMenus(date) {
+  return Promise.all(DINING_COURTS.map(court => getFullDiningCourtMenu(court, date)));
+}
+
+/**
+ * Flatten nutritionFacts into named numeric fields (for easy sorting/ratios)
+ * while also keeping the raw array (with label + % daily value) intact.
+ */
+function parseFullNutrition(nutritionFacts) {
+  const parsed = {};
+  for (const fact of nutritionFacts || []) {
+    const key = NUTRITION_KEY_MAP[fact.name];
+    if (key && fact.value != null) {
+      parsed[key] = fact.value;
+    }
+  }
+  return parsed;
+}
+
+function extractFullFoodItems(menuResults) {
+  const items = [];
+  const seenIds = new Set();
+
+  for (const result of menuResults) {
+    const court = result.data?.diningCourtByName;
+    if (!court?.dailyMenu?.meals) continue;
+
+    for (const meal of court.dailyMenu.meals) {
+      if (meal.status === 'CLOSED' || !meal.stations) continue;
+
+      for (const station of meal.stations) {
+        for (const itemAppearance of station.items || []) {
+          const item = itemAppearance.item;
+          if (!item || !item.isNutritionReady) continue;
+
+          const key = `${item.itemId}-${court.name}-${meal.name}`;
+          if (seenIds.has(key)) continue;
+          seenIds.add(key);
+
+          const nutrition = parseFullNutrition(item.nutritionFacts);
+
+          items.push({
+            itemId: item.itemId,
+            name: item.name,
+            location: court.name,
+            locationFormal: court.formalName,
+            station: station.name,
+            meal: meal.name,
+            mealStart: meal.startTime,
+            mealEnd: meal.endTime,
+            ingredients: item.ingredients || null,
+            traits: item.traits || [],
+            nutritionFacts: item.nutritionFacts || [],
+            ...nutrition
+          });
+        }
+      }
+    }
+  }
+
+  return items;
+}
 
 function jsonResult(data) {
   return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -29,12 +155,12 @@ async function fetchItems(date, court, meal) {
   let menuResults;
   if (court) {
     const exactCourt = DINING_COURTS.find(c => c.toLowerCase() === court.toLowerCase());
-    menuResults = [await getDiningCourtMenu(exactCourt || court, date)];
+    menuResults = [await getFullDiningCourtMenu(exactCourt || court, date)];
   } else {
-    menuResults = await getAllMenus(date);
+    menuResults = await getAllFullMenus(date);
   }
 
-  let items = extractFoodItems(menuResults);
+  let items = extractFullFoodItems(menuResults);
 
   if (court) {
     items = items.filter(item => item.location.toLowerCase() === court.toLowerCase());
@@ -48,7 +174,7 @@ async function fetchItems(date, court, meal) {
 
 const server = new McpServer({
   name: 'purdue-dining',
-  version: '1.0.0'
+  version: '1.1.0'
 });
 
 server.registerTool(
@@ -65,7 +191,7 @@ server.registerTool(
   'get_menu',
   {
     title: 'Get dining menu',
-    description: 'Get menu items with nutrition facts for a date, optionally filtered by dining court and/or meal.',
+    description: 'Get full menu items for a date, optionally filtered by dining court and/or meal. Each item includes every nutrition fact the API exposes (calories, total/saturated fat, cholesterol, sodium, carbs, sugar, added sugar, fiber, protein, calcium, iron, % daily values), the ingredients list, and allergen/dietary-preference traits — not just calories/protein/fiber.',
     inputSchema: {
       date: z.string().describe('Date in YYYY-MM-DD format'),
       court: z.string().optional().describe('Dining court name, e.g. "Earhart". Omit for all courts.'),
@@ -82,7 +208,7 @@ server.registerTool(
   'best_protein_sources',
   {
     title: 'Best protein sources',
-    description: 'Rank menu items by calories per gram of protein (lower is more protein-efficient). Filters out items under 50 calories or 5g protein.',
+    description: 'Rank menu items by calories per gram of protein (lower is more protein-efficient). Filters out items under 50 calories or 5g protein. Each returned item still includes the full nutrition breakdown (fat, sodium, carbs, sugar, etc.), ingredients, and traits.',
     inputSchema: {
       date: z.string().describe('Date in YYYY-MM-DD format'),
       court: z.string().optional().describe('Dining court name. Omit for all courts.'),
@@ -105,7 +231,7 @@ server.registerTool(
   'best_fiber_sources',
   {
     title: 'Best fiber sources',
-    description: 'Rank menu items by calories per gram of fiber (lower is more fiber-efficient). Filters out items under 50 calories or with no fiber.',
+    description: 'Rank menu items by calories per gram of fiber (lower is more fiber-efficient). Filters out items under 50 calories or with no fiber. Each returned item still includes the full nutrition breakdown (fat, sodium, carbs, sugar, etc.), ingredients, and traits.',
     inputSchema: {
       date: z.string().describe('Date in YYYY-MM-DD format'),
       court: z.string().optional().describe('Dining court name. Omit for all courts.'),
