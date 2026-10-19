@@ -32,15 +32,21 @@
       </div>
     </header>
 
+    <!-- View switch -->
+    <nav class="view-tabs" id="view-tabs" aria-label="View">
+      <button class="view-tab active" data-view="today">Today</button>
+      <button class="view-tab" data-view="week">Week</button>
+    </nav>
+
     <!-- Controls -->
     <nav class="controls" aria-label="Filters">
       <div class="control-row" id="court-filters">
         <button class="tab active" data-court="all">All courts</button>
-        <button class="tab" data-court="earhart">Earhart</button>
-        <button class="tab" data-court="ford">Ford</button>
-        <button class="tab" data-court="hillenbrand">Hillenbrand</button>
-        <button class="tab" data-court="wiley">Wiley</button>
-        <button class="tab" data-court="windsor">Windsor</button>
+        <button class="tab" data-court="earhart"><span class="court-dot court-earhart"></span>Earhart</button>
+        <button class="tab" data-court="ford"><span class="court-dot court-ford"></span>Ford</button>
+        <button class="tab" data-court="hillenbrand"><span class="court-dot court-hillenbrand"></span>Hillenbrand</button>
+        <button class="tab" data-court="wiley"><span class="court-dot court-wiley"></span>Wiley</button>
+        <button class="tab" data-court="windsor"><span class="court-dot court-windsor"></span>Windsor</button>
       </div>
       <div class="control-row split">
         <div class="control-group" id="meal-filters">
@@ -53,6 +59,13 @@
         </div>
       </div>
     </nav>
+
+    <p class="week-key" id="week-key" hidden>🐄 beef · 🐔 chicken in Earhart's MYO stir fry</p>
+
+    <div class="hidden-foods" id="hidden-foods" hidden>
+      <button class="text-link" id="hidden-toggle">0 hidden</button>
+      <ul class="hidden-list" id="hidden-list" hidden></ul>
+    </div>
 
     <!-- Loading -->
     <div class="loading" id="loading">
@@ -88,9 +101,14 @@
     </div>
 
     <!-- Ranking -->
-    <main>
+    <main id="today-view">
       <ol class="ranking" id="food-list"></ol>
     </main>
+
+    <!-- Week -->
+    <section id="week-view" hidden>
+      <div class="week-grid" id="week-grid"></div>
+    </section>
 
     <footer class="colophon">
       <span id="meta-line">Ranked by calories per gram of protein · lower is better.</span>

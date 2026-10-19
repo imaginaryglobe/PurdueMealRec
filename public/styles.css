@@ -82,6 +82,18 @@ button {
   display: none !important;
 }
 
+/* Keyboard-only focus ring (no box after mouse clicks) */
+button:focus {
+  outline: none;
+}
+
+button:focus-visible,
+.date-input:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 /* ---------- Page frame ---------- */
 .page {
   max-width: var(--col);
@@ -155,6 +167,36 @@ button {
   padding: 0.4rem 0.55rem;
   font-size: 1rem;
   line-height: 1;
+}
+
+/* ---------- View tabs ---------- */
+.view-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 8px;
+}
+
+.view-tab {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 0.35rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all var(--transition);
+}
+
+.view-tab:hover {
+  color: var(--ink);
+}
+
+.view-tab.active {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 /* ---------- Controls ---------- */
@@ -290,6 +332,13 @@ button {
   flex-shrink: 0;
 }
 
+.tab .court-dot {
+  width: 9px;
+  height: 9px;
+  margin-right: 0.45rem;
+  vertical-align: middle;
+}
+
 .court-earhart { background: var(--earhart); }
 .court-ford { background: var(--ford); }
 .court-hillenbrand { background: var(--hillenbrand); }
@@ -351,6 +400,248 @@ button {
   font-size: 0.8rem;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Week view ---------- */
+.page.wide {
+  max-width: 1280px;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 0.75rem;
+  overflow-x: auto;
+  /* room so the Today ring/glow isn't clipped by the scroll container */
+  padding: 8px 4px 14px;
+}
+
+.day-col {
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper-raised);
+  padding: 0.75rem 0.6rem;
+}
+
+/* Today: gold ring + soft glow, lifted slightly */
+.day-col.is-today {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold), 0 10px 24px -8px var(--gold);
+  transform: translateY(-4px);
+}
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 0.25rem 0.6rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 2px solid var(--rule-strong);
+}
+
+.is-today .day-head {
+  border-bottom-color: var(--gold);
+}
+
+.day-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+
+/* Placeholder while a day loads, and the brief fade-in when it arrives */
+.day-skeleton {
+  padding-top: 0.25rem;
+}
+
+.sk-day-row {
+  height: 2.6rem;
+  margin: 0.45rem 0.25rem;
+}
+
+.day-col.arrive .day-list,
+.day-col.arrive .day-empty {
+  animation: dayArrive 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes dayArrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stirfry-badge {
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* ---------- Hide foods ---------- */
+.rank-row,
+.day-row {
+  position: relative;
+}
+
+.hide-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  line-height: 1;
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--transition), color var(--transition);
+}
+
+.rank-row:hover .hide-btn,
+.day-row:hover .hide-btn,
+.hide-btn:focus-visible {
+  opacity: 1;
+}
+
+.hide-btn:hover {
+  color: var(--earhart);
+  border-color: var(--earhart);
+}
+
+.day-food-name {
+  padding-right: 0.9rem;
+}
+
+/* Today list: put the ✕ in the page margin so it never covers the ratio */
+.rank-row .hide-btn {
+  top: 1.7rem;
+  right: -2rem;
+}
+
+.hidden-foods {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+}
+
+.hidden-foods .text-link {
+  margin-top: 0;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.hidden-list {
+  list-style: none;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper-raised);
+}
+
+.hidden-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+
+.restore-btn {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.food-emoji {
+  font-family: var(--sans);
+  font-style: normal;
+}
+
+.week-key {
+  margin: -1.5rem 0 1.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.day-date {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-list {
+  list-style: none;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.4rem;
+  align-items: start;
+  margin: 0.2rem 0;
+  padding: 0.35rem 0.4rem 0.35rem 0.5rem;
+  border-left: 3px solid var(--bar, var(--rule-strong));
+  border-radius: 2px;
+}
+
+.day-rank {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-row:first-child .day-rank {
+  color: var(--gold);
+}
+
+.day-food {
+  min-width: 0;
+}
+
+.day-food-name {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.day-food-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.day-food-court {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.day-ratio {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-empty {
+  padding: 1.5rem 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* ---------- States ---------- */
@@ -448,6 +739,8 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .rank-row { animation: none; }
   .sk { animation: none; }
+  .day-col.arrive .day-list,
+  .day-col.arrive .day-empty { animation: none; }
 }
 
 /* ---------- Responsive ---------- */
