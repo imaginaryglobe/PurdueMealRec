@@ -184,6 +184,45 @@ function extractFoodItems(menuResults) {
   return items;
 }
 
+// Names that suggest a meat/fish item vs. bars, toppings and build-your-own stations
+const MEAT_WORDS = /\b(steak|sirloin|ribeye|brisket|chicken|drumsticks?|wings?|beef|pork|ham|turkey|bacon|sausage|salmon|fish|shrimp|meatballs?|ribs?|lamb)\b/i;
+const NOT_A_SINGLE_ITEM = /\b(bar|toppings?|sauce|soup|pizza|salad|burrito|broth|gravy)\b|build your own|make your own|^myo\b/i;
+
+/**
+ * Meat-related items on the menu that have no published nutrition (isNutritionReady: false),
+ * e.g. a steak with "no info available". Existence only; there are no numbers to report.
+ * Returns [{ name, location, meal, station }] deduped by (name, court, meal).
+ */
+function extractNoNutritionItems(menuResults) {
+  const items = [];
+  const seen = new Set();
+
+  for (const result of menuResults) {
+    const court = result.data?.diningCourtByName;
+    if (!court?.dailyMenu?.meals) continue;
+
+    for (const meal of court.dailyMenu.meals) {
+      if (meal.status === 'CLOSED' || !meal.stations) continue;
+
+      for (const station of meal.stations) {
+        for (const appearance of station.items || []) {
+          const item = appearance.item;
+          if (!item || item.isNutritionReady) continue;
+          if (!MEAT_WORDS.test(item.name) || NOT_A_SINGLE_ITEM.test(item.name)) continue;
+
+          const key = `${item.name.toLowerCase()}-${court.name}-${meal.name}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+
+          items.push({ name: item.name, location: court.name, meal: meal.name, station: station.name });
+        }
+      }
+    }
+  }
+
+  return items;
+}
+
 /**
  * Parse nutrition facts to get calories, protein, and fiber
  */
@@ -270,6 +309,7 @@ module.exports = {
   getDiningCourtMenu,
   getAllMenus,
   extractFoodItems,
+  extractNoNutritionItems,
   parseNutrition,
   getMyoStirFryProteins
 };

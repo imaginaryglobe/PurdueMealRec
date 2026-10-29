@@ -235,7 +235,7 @@ async function fetchWeek(refresh = false) {
 
     // Show all 7 columns right away as placeholders, then fill each as its response arrives
     foodList.innerHTML = '';
-    weekDays = dates.map(date => ({ date, items: undefined, stirFry: null }));
+    weekDays = dates.map(date => ({ date, items: undefined, stirFry: null, noNutrition: [] }));
     renderWeek();
 
     await Promise.all(dates.map(async (date, i) => {
@@ -244,10 +244,10 @@ async function fetchWeek(refresh = false) {
             const response = await fetch(`/api/top-foods/${date}${refresh ? '?refresh=1' : ''}`);
             if (!response.ok) throw new Error(`Server error ${response.status}`);
             const data = await response.json();
-            day = { date, items: data.items, stirFry: data.stirFry };
+            day = { date, items: data.items, stirFry: data.stirFry, noNutrition: data.noNutrition || [] };
         } catch (error) {
             console.error(`Failed to load ${date}:`, error);
-            day = { date, items: null, stirFry: null };
+            day = { date, items: null, stirFry: null, noNutrition: [] };
         }
 
         if (seq !== weekSeq) return; // a newer request has taken over
@@ -336,7 +336,7 @@ function renderDayColumn(index, animate) {
 /**
  * One day's column. `items` is undefined while loading, null if it failed to load.
  */
-function dayColumnHtml({ date, items, stirFry }, dayIndex, animate = false) {
+function dayColumnHtml({ date, items, stirFry, noNutrition = [] }, dayIndex, animate = false) {
     const isToday = dayIndex === 0;
     const d = new Date(`${date}T12:00:00Z`);
     const weekday = d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
@@ -360,8 +360,33 @@ function dayColumnHtml({ date, items, stirFry }, dayIndex, animate = false) {
         <span class="day-name">${weekday}${stirFryBadge(stirFry)}</span>
         <span class="day-date">${label}</span>
       </h2>
+      ${noNutritionHtml(noNutrition)}
       ${body}
     </section>`;
+}
+
+/**
+ * Below-the-line list of meat items the dining halls published no nutrition for.
+ * Just a heads-up that they exist; follows the current court/meal filters and hidden foods.
+ */
+function noNutritionHtml(noNutrition) {
+    const shown = noNutrition.filter(item =>
+        (selectedCourt === 'all' || item.location.toLowerCase() === selectedCourt) &&
+        item.meal.toLowerCase() === selectedMeal &&
+        !hiddenFoods.has(item.name.toLowerCase())
+    );
+    if (shown.length === 0) return '';
+
+    return `
+      <div class="day-nodata">
+        <h3 class="day-nodata-title">No nutrition info</h3>
+        <ul>${shown.map(item => `
+          <li style="--bar: var(--${item.location.toLowerCase()})">
+            <span class="day-nodata-name">${escapeHtml(item.name)}</span>
+            <span class="day-nodata-court">${escapeHtml(item.location)}</span>
+          </li>`).join('')}
+        </ul>
+      </div>`;
 }
 
 /**

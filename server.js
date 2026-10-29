@@ -5,6 +5,7 @@ const {
     getDiningCourtMenu,
     getAllMenus,
     extractFoodItems,
+    extractNoNutritionItems,
     getMyoStirFryProteins
 } = require('./graphql-client');
 
@@ -147,6 +148,11 @@ app.get('/api/top-foods/:date', async (req, res) => {
 
         console.log(`Returning ${validItems.length} items with nutrition data`);
 
+        // Meat items with no published nutrition: listed separately, never ranked
+        let noNutrition = extractNoNutritionItems(menuResults);
+        if (court) noNutrition = noNutrition.filter(i => i.location.toLowerCase() === court.toLowerCase());
+        if (meal) noNutrition = noNutrition.filter(i => i.meal.toLowerCase() === meal.toLowerCase());
+
         // Courts whose menu couldn't be loaded (the rest are still returned)
         const failedCourts = court
             ? []
@@ -157,6 +163,7 @@ app.get('/api/top-foods/:date', async (req, res) => {
             count: validItems.length,
             stirFry: stirFryInfo,
             failedCourts,
+            noNutrition,
             items: validItems
         });
 

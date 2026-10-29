@@ -464,8 +464,49 @@ button:focus-visible,
   margin: 0.45rem 0.25rem;
 }
 
+/* Meat items with no published nutrition, above the ranking with a divider under them */
+.day-nodata {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.day-nodata-title {
+  margin: 0 0.25rem 0.3rem;
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.day-nodata ul {
+  list-style: none;
+}
+
+.day-nodata li {
+  display: flex;
+  flex-direction: column;
+  margin: 0.2rem 0;
+  padding: 0.2rem 0.4rem 0.2rem 0.5rem;
+  border-left: 3px solid var(--bar, var(--rule-strong));
+}
+
+.day-nodata-name {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.day-nodata-court {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
 .day-col.arrive .day-list,
-.day-col.arrive .day-empty {
+.day-col.arrive .day-empty,
+.day-col.arrive .day-nodata {
   animation: dayArrive 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
@@ -740,7 +781,8 @@ button:focus-visible,
   .rank-row { animation: none; }
   .sk { animation: none; }
   .day-col.arrive .day-list,
-  .day-col.arrive .day-empty { animation: none; }
+  .day-col.arrive .day-empty,
+  .day-col.arrive .day-nodata { animation: none; }
 }
 
 /* ---------- Responsive ---------- */
